@@ -10,9 +10,13 @@ from langchain.retrievers.document_compressors import (
     EmbeddingsFilter,
     DocumentCompressorPipeline,
 )
-from langchain.tools import Tool
+from langchain.tools import StructuredTool
+from pydantic import BaseModel, Field
 from core.helper import fetch_collection_dim
-    
+
+class RetrieveInput(BaseModel):
+    query: str = Field(..., description="The user query to retrieve relevant paper chunks for.")
+
 # Metadata schema used by SelfQueryRetriever
 def build_metadata_info() -> List[AttributeInfo]:
     return [
@@ -104,7 +108,7 @@ def build_retriever_tool(
     extractor = LLMChainExtractor.from_llm(llm)
     emb_filter = EmbeddingsFilter(
         embeddings=embeddings,
-        similarity_threshold=0.30,  # raise to be stricter, lower to be more permissive
+        similarity_threshold=0.25,
     )
     compressor = DocumentCompressorPipeline(
         transformers=[extractor, emb_filter]
@@ -115,66 +119,74 @@ def build_retriever_tool(
         base_retriever=base_retriever,
     )
 
+    def _jsonify_md(md: Dict[str, Any]) -> Dict[str, Any]:
+        clean = {}
+        for k, v in (md or {}).items():
+            if isinstance(v, (str, int, float, bool)) or v is None:
+                clean[k] = v
+            else:
+                clean[k] = str(v)
+        return clean
+
+    def _serialize_docs(docs, max_docs=20, max_chars=8000):
+        out, total = [], 0
+        for d in docs[:max_docs]:
+            txt = d.page_content or ""
+            total += len(txt)
+            out.append({"page_content": txt, "metadata": _jsonify_md(d.metadata or {})})
+            if total > max_chars:
+                break
+        return out
+
     def _docs_to_sources(docs) -> list[dict[str, Any]]:
-        sources = []
-        seen = set()
+        sources, seen = [], set()
         for i, d in enumerate(docs):
             md = d.metadata or {}
             sid = md.get("source") or "doc"
             page = md.get("page")
-            title = md.get("title") or md.get("Title")
-            authors = md.get("Author")
-            journal = md.get("Journal")
-            year = md.get("Publication Year")
-            population_flag = md.get("Population")
-            intervention_flag = md.get("Intervention")
-            comparison_flag = md.get("Comparator")
-            outcome_flag = md.get("Outcome")
-            study_design_flag = md.get("Study Design")
-            PICOS_qualified_flag = md.get("Qualification")
             key = (sid, page)
             if key in seen:
                 continue
             seen.add(key)
             sources.append({
                 "id": f"doc{i+1}",
-                "title": title,
+                "title": md.get("title") or md.get("Title"),
                 "page": page if isinstance(page, int) else (int(page) if str(page).isdigit() else None),
-                "authors": authors,
-                "journal": journal,
-                "publication_year": year,
-                "population_flag": population_flag,
-                "intervention_flag": intervention_flag,
-                "comparison_flag": comparison_flag,
-                "outcome_flag": outcome_flag,
-                "study_design_flag": study_design_flag,
-                "PICOS_qualified_flag": PICOS_qualified_flag,
+                "authors": md.get("Author"),
+                "journal": md.get("Journal"),
+                "publication_year": md.get("Publication Year"),
             })
         return sources
 
     def _join_docs(docs, max_chars: int = 10_000) -> str:
-        parts = []
+        parts, total = [], 0
         for i, d in enumerate(docs, 1):
             md = d.metadata or {}
             sid = f"doc{i}"
             page = md.get("page")
             head = f"[{i}] ({sid}{f':p.{page}' if page is not None else ''})"
-            parts.append(f"{head}\n{d.page_content}")
-            if sum(len(p) for p in parts) > max_chars:
+            chunk = f"{head}\n{d.page_content}"
+            total += len(chunk)
+            parts.append(chunk)
+            if total > max_chars:
                 break
         return "\n\n".join(parts)
 
-    def rag_with_sources_func(query: str) -> str:
+    def rag_with_sources_func(query: str) -> dict:
         docs = compression_retriever.invoke(query)
-        sources = _docs_to_sources(docs)
-        context = _join_docs(docs)
-        import json
-        sources_json = json.dumps(sources, ensure_ascii=False)
-        return f"CONTEXT:\n{context}\n\nSOURCES_JSON={sources_json}"
+        return {
+            "context": _join_docs(docs),
+            "sources": _docs_to_sources(docs),
+            "docs": _serialize_docs(docs)
+        }
 
-    retriever_tool = Tool(
+    retriever_tool = StructuredTool.from_function(
         name="retrieve_paper_chunks",
-        description="Search and return information about medical research papers, always emits SOURCES_JSON first.",
+        description=(
+            "Retrieve biomedical passages and structured documents for a query. "
+            "Returns dict {'context': str, 'sources': List[dict], 'docs': List[{page_content, metadata}]}"
+        ),
         func=rag_with_sources_func,
+        args_schema=RetrieveInput,
     )
     return retriever_tool

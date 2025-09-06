@@ -7,7 +7,7 @@ from core.graph import build_app
 from core.retriever import fetch_collection_dim
 from langchain_openai import OpenAIEmbeddings
 
-from core.helper import _extract_sources_block
+from core.helper import _extract_sources_block, SourceCatcher, _fmt_source
 
 
 SESSION_GRAPH = "graph"
@@ -39,7 +39,7 @@ async def on_chat_start():
 @cl.on_message
 async def on_message(message: cl.Message):
     text = message.content.strip()
-    
+
     graph = cl.user_session.get(SESSION_GRAPH)
     thread_id = cl.user_session.get(SESSION_THREAD)
     cfg: AppConfig = cl.user_session.get(SESSION_CFG)
@@ -52,14 +52,16 @@ async def on_message(message: cl.Message):
         answer_prefix_tokens=["**Answer:**\n\n"],
     )
 
+    catcher = SourceCatcher()
+    
     # Single-shot invoke (you could switch to streaming with astream_events to show tool steps)
     result = await graph.ainvoke(
         {"input": text, "plan": [], "history": []},
-        config={"configurable": {"thread_id": thread_id}, "recursion_limit": 50, "callbacks": [langchain_cb]},
+        config={"configurable": {"thread_id": thread_id}, "recursion_limit": 50, "callbacks": [langchain_cb, catcher]},
     )
     final = result.get("response") or "No response."
 
-    sources = _extract_sources_block(final)
+    sources = catcher.sources or _extract_sources_block(final)
     # Render final; optionally split to hide sources block and show elements separately
     if sources:
         # Show answer without the Sources block duplicated
@@ -68,7 +70,7 @@ async def on_message(message: cl.Message):
         await thinking.update()
         await cl.Message(
             content="**Sources**",
-            elements=[cl.Text(name=f"Source {i+1}", content=s) for i, s in enumerate(sources)],
+            elements=[cl.Text(name=f"Source {i+1}", content=_fmt_source(s)) for i, s in enumerate(sources)],
         ).send()
     else:
         thinking.content = final
