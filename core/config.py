@@ -30,3 +30,4 @@ class AppConfig:
             openai_embed_model=_get("OPENAI_EMBED_MODEL", "text-embedding-3-small"),
             top_k=_get("TOP_K", 10),
         )
+

@@ -7,19 +7,12 @@ from core.graph import build_app
 from core.retriever import fetch_collection_dim
 from langchain_openai import OpenAIEmbeddings
 
+from core.helper import _extract_sources_block
+
+
 SESSION_GRAPH = "graph"
 SESSION_CFG = "cfg"
 SESSION_THREAD = "thread_id"
-
-def _extract_sources_block(text: str) -> list[str]:
-    if not text:
-        return []
-    # Expect replanner to append a "Sources:" section for RAG answers.
-    parts = text.split("\nSources:")
-    if len(parts) < 2:
-        return []
-    lines = parts[1].strip().splitlines()
-    return [l.lstrip("- ").strip() for l in lines if l.strip()]
 
 @cl.oauth_callback
 def oauth_callback(provider_id, token, raw_user_data, default_user):
@@ -35,59 +28,18 @@ async def on_chat_start():
     cl.user_session.set(SESSION_CFG, cfg)
     cl.user_session.set(SESSION_THREAD, str(uuid.uuid4()))
     cl.user_session.set(SESSION_GRAPH, build_app(cfg))
-
+    usr = cl.user_session.get("user")
+    
     await cl.Message(
         content=(
-            "🧠 **Biomedical Assistant (Chainlit)** is ready.\n"
-            "- RAG over pgvector + SQL tools\n"
-            "- Planner → Step executor → Replanner\n\n"
-            "Type your question, or `/validate` to check pgvector dimensions."
+            f"Hello, {usr.identifier.split('@')[0]}! 👋"
         )
     ).send()
 
 @cl.on_message
 async def on_message(message: cl.Message):
     text = message.content.strip()
-
-    # Slash command: /validate to check dim mismatch
-    if text.lower().startswith("/validate"):
-        cfg: AppConfig = cl.user_session.get(SESSION_CFG)
-        qdim, sdim, err = None, None, None
-        try:
-            emb = OpenAIEmbeddings(api_key=cfg.openai_api_key)#, model=cfg.openai_embed_model)
-            qdim = len(emb.embed_query("ping"))
-        except Exception as e:
-            err = f"Embeddings init error: {e}"
-
-        try:
-            sdim = fetch_collection_dim(cfg.pgvector_url, cfg.pgvector_collection)
-        except Exception as e:
-            err = (err or "") + f" ; fetch_collection_dim error: {e}"
-
-        advice = []
-        if sdim and qdim and sdim != qdim:
-            advice.append(
-                "- Dimension mismatch. Options:\n"
-                "  1) Switch OPENAI_EMBED_MODEL to the one used for this collection and re-run.\n"
-                "  2) Create a NEW collection and re-embed with the current model.\n"
-                "  3) If using TE3-* models, set `dimensions=` to match stored size during (re)indexing."
-            )
-        elif sdim:
-            advice.append("- Dimensions look compatible ✅")
-        else:
-            advice.append("- Stored dimension unknown (empty collection or insufficient permissions).")
-
-        await cl.Message(
-            content=(
-                f"**Validation**\n"
-                f"- Query dim: `{qdim or 'unknown'}`\n"
-                f"- Stored dim: `{sdim or 'unknown'}`\n"
-                f"{('Errors: ' + err) if err else ''}\n\n" + "\n".join(advice)
-            )
-        ).send()
-        return
-
-    # Normal question flow
+    
     graph = cl.user_session.get(SESSION_GRAPH)
     thread_id = cl.user_session.get(SESSION_THREAD)
     cfg: AppConfig = cl.user_session.get(SESSION_CFG)
