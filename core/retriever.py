@@ -7,7 +7,27 @@ from langchain_openai import OpenAIEmbeddings, ChatOpenAI
 from langchain.retrievers import SelfQueryRetriever, ContextualCompressionRetriever
 from langchain.retrievers.document_compressors import LLMChainFilter
 from langchain.tools import Tool
+from sqlalchemy import create_engine, text as sql_text
 
+# --- Helper: read stored vector dimension from pgvector collection
+def fetch_collection_dim(pg_url: str, collection_name: str) -> int | None:
+    """Return the stored vector dimension for the collection, if any."""
+    try:
+        engine = create_engine(pg_url)
+        with engine.begin() as conn:
+            dims = conn.execute(sql_text(
+                """
+                SELECT vector_dims(e.embedding) AS dims
+                FROM langchain_pg_embedding e
+                JOIN langchain_pg_collection c ON e.collection_id = c.uuid
+                WHERE c.name = :name
+                LIMIT 1
+                """
+            ), {"name": collection_name}).scalar()
+        return int(dims) if dims is not None else None
+    except Exception:
+        return None
+    
 # Metadata schema used by SelfQueryRetriever
 def build_metadata_info() -> List[AttributeInfo]:
     return [

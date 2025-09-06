@@ -4,16 +4,9 @@ from dataclasses import dataclass
 from typing import Optional
 from dotenv import load_dotenv
 
-load_dotenv(override=False)
+load_dotenv(override=True)
 
 def _get(name: str, default: Optional[str] = None) -> str:
-    # Prefer Streamlit secrets if available, else env
-    try:
-        import streamlit as st
-        if name in st.secrets:
-            return str(st.secrets.get(name))
-    except Exception:
-        pass
     return os.environ.get(name, default) if default is not None else os.environ.get(name, "")
 
 @dataclass(frozen=True)
