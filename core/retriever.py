@@ -5,7 +5,11 @@ from langchain_community.vectorstores import PGVector
 # from langchain_postgres import PGVector
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
 from langchain.retrievers import SelfQueryRetriever, ContextualCompressionRetriever
-from langchain.retrievers.document_compressors import LLMChainFilter
+from langchain.retrievers.document_compressors import (
+    LLMChainExtractor,
+    EmbeddingsFilter,
+    DocumentCompressorPipeline,
+)
 from langchain.tools import Tool
 from sqlalchemy import create_engine, text as sql_text
 
@@ -113,12 +117,20 @@ def build_retriever_tool(
         vectorstore=vectorstore,
         document_contents="medical research papers",
         metadata_field_info=build_metadata_info(),
-        search_kwargs={"k": top_k},
+        search_kwargs={"k": top_k, "fetch_k": max(int(top_k)*4, 40), "mmr": True, "lambda_mult": 0.5},
     )
 
-    # 2) LLM-based filter as contextual compression
+    extractor = LLMChainExtractor.from_llm(llm)
+    emb_filter = EmbeddingsFilter(
+        embeddings=embeddings,
+        similarity_threshold=0.30,  # raise to be stricter, lower to be more permissive
+    )
+    compressor = DocumentCompressorPipeline(
+        transformers=[extractor, emb_filter]
+    )
+    
     compression_retriever = ContextualCompressionRetriever(
-        base_compressor=LLMChainFilter.from_llm(llm),
+        base_compressor=compressor,
         base_retriever=base_retriever,
     )
 
