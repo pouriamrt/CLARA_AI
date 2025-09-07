@@ -75,7 +75,7 @@ class SourceCatcher(BaseCallbackHandler):
         self._last_tool_name = None
         self._target = target_tool_name
 
-    # Keep async hooks since your app is async; prints help debug.
+    # Keep async hooks since the app is async
     async def on_tool_start(self, serialized, input_str, **kwargs):
         name = (serialized or {}).get("name") or kwargs.get("name")
         self._last_tool_name = name
@@ -85,8 +85,6 @@ class SourceCatcher(BaseCallbackHandler):
         if self._last_tool_name != self._target:
             return
         data = _coerce_to_dict(output)
-
-        print(data)
 
         if isinstance(data, dict):
             self.payload = data
