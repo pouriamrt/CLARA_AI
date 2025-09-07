@@ -138,10 +138,5 @@ See [`requirements.txt`](requirements.txt):
 
 ---
 
-## 🧑‍💻 Contributors
-Maintained by researchers and developers building **explainable biomedical AI assistants**.
-
----
-
 ## 📜 License
 This project is licensed under the **MIT License**. See `LICENSE` for details.

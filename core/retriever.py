@@ -84,7 +84,7 @@ def build_retriever_tool(
     openai_chat_model: str,
     openai_embed_model: str,
     top_k: int = 10,
-) -> Tool:
+) -> StructuredTool:
     # Vector store
     embeddings = OpenAIEmbeddings(api_key=openai_api_key)#, model=openai_embed_model)
     vectorstore = PGVector(
