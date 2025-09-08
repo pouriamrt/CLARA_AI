@@ -2,7 +2,7 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
 # ---------- Agent system prompt (step executor) ----------
 def build_agent_prompt(tool_names: str, retriever_name: str) -> str:
-    return f"""
+    agent_prompt = f"""
     You are a senior biomedical research assistant that solves complex questions using tools.
     You MUST use tools whenever a step requires external knowledge, structured data, calculations, or citations.
     Never fabricate tool results. Never cite facts you did not retrieve this turn.

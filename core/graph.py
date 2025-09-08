@@ -29,7 +29,7 @@ class PlanExecute(TypedDict):
 
 # ---------- Build tools (SQL + RAG) ----------
 def build_tools(cfg: AppConfig):
-    llm = ChatOpenAI(model=cfg.openai_chat_model, temperature=0, api_key=cfg.openai_api_key)
+    llm = ChatOpenAI(model=cfg.openai_chat_model, temperature=0, api_key=cfg.openai_api_key, streaming=True)
 
     tools = []
     # SQL tools (optional if URL is provided)
@@ -82,7 +82,7 @@ def build_replanner(llm: ChatOpenAI, retriever_name: str):
 
 # ---------- Graph assembly ----------
 def build_app(cfg: AppConfig):
-    llm = ChatOpenAI(model=cfg.openai_chat_model, temperature=0, api_key=cfg.openai_api_key)
+    llm = ChatOpenAI(model=cfg.openai_chat_model, temperature=0, api_key=cfg.openai_api_key, streaming=True)
     tools = build_tools(cfg)
     tool_names = ", ".join([getattr(t, "name", t.__class__.__name__) for t in tools])
     RETRIEVER_NAME = "retrieve_paper_chunks"

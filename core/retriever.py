@@ -49,36 +49,36 @@ def build_metadata_info() -> List[AttributeInfo]:
             description="Abstract of the paper that the paper is about.", 
             type="string",
         ),
-        # AttributeInfo(
-        #     name="Population", 
-        #     description="Whether the Population is mentioned in the paper. P flag in PICOS is the string True or False.", 
-        #     type="string",
-        # ),
-        # AttributeInfo(
-        #     name="Intervention", 
-        #     description="Whether the Intervention is mentioned in the paper. I flag in PICOS is the string True or False.", 
-        #     type="string",
-        # ),
-        # AttributeInfo(
-        #     name="Comparator", 
-        #     description="Whether the Comparator is mentioned in the paper. C flag in PICOS is the string True or False.", 
-        #     type="string",
-        # ),
-        # AttributeInfo(
-        #     name="Outcome", 
-        #     description="Whether the Outcome is mentioned in the paper. O flag in PICOS is the string True or False.", 
-        #     type="string",
-        # ),
-        # AttributeInfo(
-        #     name="Study Design", 
-        #     description="Whether the Study Design is mentioned in the paper. S flag in PICOS is the string True or False.", 
-        #     type="string",
-        # ),
-        # AttributeInfo(
-        #     name="Qualification", 
-        #     description="Whether the paper is PICOS compliant or not. It is the string Qualified or Not Qualified.", 
-        #     type="string",
-        # ),
+        AttributeInfo(
+            name="population_flag", 
+            description="Whether the Population is mentioned in the paper. P flag in PICOS is the string True or False.", 
+            type="string",
+        ),
+        AttributeInfo(
+            name="intervention_flag", 
+            description="Whether the Intervention is mentioned in the paper. I flag in PICOS is the string True or False.", 
+            type="string",
+        ),
+        AttributeInfo(
+            name="comparator_flag", 
+            description="Whether the Comparator is mentioned in the paper. C flag in PICOS is the string True or False.", 
+            type="string",
+        ),
+        AttributeInfo(
+            name="outcome_flag", 
+            description="Whether the Outcome is mentioned in the paper. O flag in PICOS is the string True or False.", 
+            type="string",
+        ),
+        AttributeInfo(
+            name="study_design_flag", 
+            description="Whether the Study Design is mentioned in the paper. S flag in PICOS is the string True or False.", 
+            type="string",
+        ),
+        AttributeInfo(
+            name="qualification_flag", 
+            description="Whether the paper is PICOS compliant or not. It is the string Qualified or Not Qualified.", 
+            type="string",
+        )
     ]
 
 def build_retriever_tool(
