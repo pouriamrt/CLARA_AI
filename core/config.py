@@ -16,7 +16,7 @@ class AppConfig:
     pgvector_url: str
     pgvector_collection: str
     openai_chat_model: str = "gpt-4.1-mini"
-    openai_embed_model: str = "text-embedding-3-small"
+    openai_embed_model: str = "text-embedding-3-large"
     top_k: int = 10
 
     @staticmethod
@@ -27,7 +27,7 @@ class AppConfig:
             pgvector_url=_get("PGVECTOR_URL", ""),
             pgvector_collection=_get("PGVECTOR_COLLECTION", "state_of_union_vectors"),
             openai_chat_model=_get("OPENAI_CHAT_MODEL", "gpt-4.1-mini"),
-            openai_embed_model=_get("OPENAI_EMBED_MODEL", "text-embedding-3-small"),
+            openai_embed_model=_get("OPENAI_EMBED_MODEL", "text-embedding-3-large"),
             top_k=_get("TOP_K", 10),
         )
 

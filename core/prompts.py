@@ -11,7 +11,7 @@ def build_agent_prompt(tool_names: str, retriever_name: str) -> str:
 
     === Tool Routing ===
     - Prefer <{retriever_name}> for factual/knowledge synthesis with citations.
-    - Use SQL tools for structured DB lookups. Use schema-first flow:
+    - Use SQL tools for structured DB lookups like questions starting with "How many ...". Use schema-first flow:
         1) Call sql_db_list_tables to discover candidate tables.
         2) Call sql_db_schema with the SPECIFIC table names you intend to query (include exact names).
         3) Draft SQL text; then call sql_db_query_checker to validate/fix SQL.
@@ -73,7 +73,7 @@ def build_planner_prompt(tool_names: str, retriever_name: str, top_k: int) -> st
 
                 KEY TOOL POLICIES:
                 - **Retrieval-first**: If the objective needs external knowledge, the **first** retrieval step MUST use <TOOL: {retriever_name}> to fetch top-{top_k} passages with recency bias.
-                - **SQL schema-first**: If any SQL is needed, you MUST:
+                - **SQL schema-first**: If any SQL is needed like questions starting with "How many ...", you MUST:
                 1) <TOOL: sql_db_list_tables> to discover candidates,
                 2) <TOOL: sql_db_schema> for the **specific tables** you intend to query (include exact table names),
                 3) Draft SQL (as text) and validate via <TOOL: sql_db_query_checker>,

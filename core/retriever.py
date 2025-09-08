@@ -1,8 +1,7 @@
 from __future__ import annotations
 from typing import List, Dict, Any
 from langchain.chains.query_constructor.base import AttributeInfo
-from langchain_community.vectorstores import PGVector
-# from langchain_postgres import PGVector
+from langchain_postgres import PGVector
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
 from langchain.retrievers import SelfQueryRetriever, ContextualCompressionRetriever
 from langchain.retrievers.document_compressors import (
@@ -21,60 +20,65 @@ class RetrieveInput(BaseModel):
 def build_metadata_info() -> List[AttributeInfo]:
     return [
         AttributeInfo(
-            name="Publication Year",
+            name="publication_year",
             description="The year that the paper was published.",
             type="integer",
         ),
         AttributeInfo(
-            name="Date Added",
+            name="date_added",
             description="The year that the paper was added to the collection.",
             type="integer",
         ),
         AttributeInfo(
-            name="Author",
+            name="author",
             description="Authors of the paper, it could be couple of people.",
             type="string",
         ),
         AttributeInfo(
-            name="Title", 
+            name="title", 
             description="Title of the paper that the paper is about.", 
             type="string",
         ),
         AttributeInfo(
-            name="Cleaned_Abs", 
+            name="journal", 
+            description="Journal of the paper that the paper is about.", 
+            type="string",
+        ),
+        AttributeInfo(
+            name="abstract", 
             description="Abstract of the paper that the paper is about.", 
             type="string",
         ),
-        AttributeInfo(
-            name="Population", 
-            description="Whether the Population is mentioned in the paper. P flag in PICOS is the string True or False.", 
-            type="string",
-        ),
-        AttributeInfo(
-            name="Intervention", 
-            description="Whether the Intervention is mentioned in the paper. I flag in PICOS is the string True or False.", 
-            type="string",
-        ),
-        AttributeInfo(
-            name="Comparator", 
-            description="Whether the Comparator is mentioned in the paper. C flag in PICOS is the string True or False.", 
-            type="string",
-        ),
-        AttributeInfo(
-            name="Outcome", 
-            description="Whether the Outcome is mentioned in the paper. O flag in PICOS is the string True or False.", 
-            type="string",
-        ),
-        AttributeInfo(
-            name="Study Design", 
-            description="Whether the Study Design is mentioned in the paper. S flag in PICOS is the string True or False.", 
-            type="string",
-        ),
-        AttributeInfo(
-            name="Qualification", 
-            description="Whether the paper is PICOS compliant or not. It is the string Qualified or Not Qualified.", 
-            type="string",
-        ),
+        # AttributeInfo(
+        #     name="Population", 
+        #     description="Whether the Population is mentioned in the paper. P flag in PICOS is the string True or False.", 
+        #     type="string",
+        # ),
+        # AttributeInfo(
+        #     name="Intervention", 
+        #     description="Whether the Intervention is mentioned in the paper. I flag in PICOS is the string True or False.", 
+        #     type="string",
+        # ),
+        # AttributeInfo(
+        #     name="Comparator", 
+        #     description="Whether the Comparator is mentioned in the paper. C flag in PICOS is the string True or False.", 
+        #     type="string",
+        # ),
+        # AttributeInfo(
+        #     name="Outcome", 
+        #     description="Whether the Outcome is mentioned in the paper. O flag in PICOS is the string True or False.", 
+        #     type="string",
+        # ),
+        # AttributeInfo(
+        #     name="Study Design", 
+        #     description="Whether the Study Design is mentioned in the paper. S flag in PICOS is the string True or False.", 
+        #     type="string",
+        # ),
+        # AttributeInfo(
+        #     name="Qualification", 
+        #     description="Whether the paper is PICOS compliant or not. It is the string Qualified or Not Qualified.", 
+        #     type="string",
+        # ),
     ]
 
 def build_retriever_tool(
@@ -86,11 +90,11 @@ def build_retriever_tool(
     top_k: int = 10,
 ) -> StructuredTool:
     # Vector store
-    embeddings = OpenAIEmbeddings(api_key=openai_api_key)#, model=openai_embed_model)
+    embeddings = OpenAIEmbeddings(api_key=openai_api_key, model=openai_embed_model)
     vectorstore = PGVector(
-        embedding_function=embeddings,
+        embeddings=embeddings,
         collection_name=collection_name,
-        connection_string=pgvector_url,
+        connection=pgvector_url,
         use_jsonb=True,
     )
 
@@ -100,7 +104,7 @@ def build_retriever_tool(
     base_retriever = SelfQueryRetriever.from_llm(
         llm=llm,
         vectorstore=vectorstore,
-        document_contents="medical research papers",
+        document_contents="medical research papers about exercise and dementia",
         metadata_field_info=build_metadata_info(),
         search_kwargs={"k": top_k, "fetch_k": max(int(top_k)*4, 25), "mmr": True, "lambda_mult": 0.5},
     )
@@ -150,11 +154,11 @@ def build_retriever_tool(
             seen.add(key)
             sources.append({
                 "id": f"doc{i+1}",
-                "title": md.get("title") or md.get("Title"),
+                "title": md.get("title"),
                 "page": page if isinstance(page, int) else (int(page) if str(page).isdigit() else None),
-                "authors": md.get("Author"),
-                "journal": md.get("Journal"),
-                "publication_year": md.get("Publication Year"),
+                "authors": md.get("author"),
+                "journal": md.get("journal"),
+                "publication_year": md.get("publication_year"),
             })
         return sources
 

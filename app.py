@@ -4,8 +4,6 @@ import chainlit as cl
 
 from core.config import AppConfig
 from core.graph import build_app
-from core.retriever import fetch_collection_dim
-from langchain_openai import OpenAIEmbeddings
 
 from core.helper import _extract_sources_block, SourceCatcher, _fmt_source
 
