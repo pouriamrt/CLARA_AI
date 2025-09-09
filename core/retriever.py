@@ -106,8 +106,9 @@ def build_retriever_tool(
         vectorstore=vectorstore,
         document_contents="medical research papers about exercise and dementia",
         metadata_field_info=build_metadata_info(),
-        search_kwargs={"k": top_k, "fetch_k": max(int(top_k)*4, 25), "mmr": True, "lambda_mult": 0.5},
+        search_kwargs={"k": top_k, "fetch_k": max(int(top_k)*2, 12), "mmr": True, "lambda_mult": 0.5},
     )
+    # base_retriever = vectorstore.as_retriever(search_kwargs={"k": top_k, "fetch_k": max(int(top_k)*2, 12), "mmr": True, "lambda_mult": 0.5})
 
     extractor = LLMChainExtractor.from_llm(llm)
     emb_filter = EmbeddingsFilter(

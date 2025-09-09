@@ -101,15 +101,32 @@ def build_app(cfg: AppConfig):
         task = plan[0]
         available = ", ".join([getattr(t, "name", t.__class__.__name__) for t in tools])
         task_formatted = f"""For the following plan:
-            {plan_str}
+        {plan_str}
 
-            Available tools: {available}
+        Available tools: {available}
 
-            Execute ONLY the next step: {task}
-            - If the step includes <TOOL: name>, call that tool with the specified input.
-            - If the step is <THINK>, do the reasoning/synthesis using prior tool results.
-            - When done, return a concise result for this step (include citations if from RAG/search).
+        Execute ONLY the next step:
+        {task}
+
+        STRICT RULES
+        - Do not skip, reorder, or anticipate future steps.
+        - If the step includes "<TOOL: name>", CALL THAT TOOL with the exact inputs specified.
+        - If the step is "<THINK>", perform reasoning/synthesis using ONLY prior tool results from THIS conversation turn.
+        - Never fabricate tool outputs. No external facts without a tool call this turn.
+        - If you used retrieve_paper_chunks (RAG), add inline sentence-level citations exactly where each fact appears: [CIT:<id>:<page>].
+        - If you used retrieve_paper_chunks (RAG), append the exact SOURCES_JSON=[...] line VERBATIM at the end of your step output.
+        - NEVER add a human-readable "Sources:" section; the application renders sources.
+        - If a tool fails or returns nothing, briefly state the failure and propose ONE minimal recovery action.
+
+        RETURN FORMAT (for THIS step only)
+        - Start with **Step Summary**: one–two sentences describing what you did/learned in this step.
+        - Then **Reasoning**: short, structured rationale (no new external facts).
+        - Then **Findings**: bullet list of results/metrics/claims. Attach [CIT:<id>:<page>] to any fact from RAG.
+        - If SQL-only, present rows/aggregates succinctly under Findings (no SOURCES_JSON).
+        - If RAG was used, include SOURCES_JSON=[{{...}}] as the LAST line, verbatim from the tool output.
+        - Use headings to structure the answer and bold the important parts.
         """
+
         agent_response = await agent_executor.ainvoke({"messages": history + [("user", task_formatted)]}, config=config)
         return {
             "past_steps": [(task, agent_response["messages"][-1].content)],
