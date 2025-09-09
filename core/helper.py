@@ -90,8 +90,6 @@ class SourceCatcher(BaseCallbackHandler):
             self.payload = data
             if isinstance(data.get("sources"), list):
                 self.sources = data["sources"]
-            if isinstance(data.get("docs"), list):
-                self.docs = data["docs"]
                 
 
 # --- Helper: read stored vector dimension from pgvector collection
@@ -128,11 +126,17 @@ def _extract_sources_block(text: str) -> list[str]:
 def _fmt_source(s) -> str:
     # Handles dicts or preformatted strings
     if isinstance(s, dict):
-        title  = s.get("title") or s.get("Title") or "Untitled"
-        auth   = s.get("authors") or s.get("Author") or "Unknown"
-        year   = s.get("publication_year") or s.get("Publication Year") or "n.d."
+        title  = s.get("title") or s.get("Title") or "-"
+        journal = s.get("journal") or s.get("Journal") or "-"
+        auth   = s.get("author") or s.get("authors") or "-"
+        year   = s.get("publication_year") or s.get("Publication Year") or "-"
         page   = s.get("page")
         page_s = f", p.{page}" if page is not None else ""
-        return f"{title} — {auth} ({year}){page_s}"
+        population_flag = str(s.get("population_flag")) or ""
+        intervention_flag = str(s.get("intervention_flag")) or ""
+        comparator_flag = str(s.get("comparator_flag")) or ""
+        outcome_flag = str(s.get("outcome_flag")) or ""
+        study_design_flag = str(s.get("study_design_flag")) or ""
+        return f"{title} — {auth} ({year}){page_s} - journal: {journal} - population: {population_flag} - intervention: {intervention_flag} - comparator: {comparator_flag} - outcome: {outcome_flag} - study design: {study_design_flag}"
     return str(s)
 

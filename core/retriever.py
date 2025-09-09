@@ -161,6 +161,11 @@ def build_retriever_tool(
                 "authors": md.get("author"),
                 "journal": md.get("journal"),
                 "publication_year": md.get("publication_year"),
+                "population_flag": md.get("population_flag"),
+                "intervention_flag": md.get("intervention_flag"),
+                "comparator_flag": md.get("comparator_flag"),
+                "outcome_flag": md.get("outcome_flag"),
+                "study_design_flag": md.get("study_design_flag"),
             })
         return sources
 
@@ -182,15 +187,14 @@ def build_retriever_tool(
         docs = compression_retriever.invoke(query)
         return {
             "context": _join_docs(docs),
-            "sources": _docs_to_sources(docs),
-            "docs": _serialize_docs(docs)
+            "sources": _docs_to_sources(docs)
         }
 
     retriever_tool = StructuredTool.from_function(
         name="retrieve_paper_chunks",
         description=(
             "Retrieve biomedical passages and structured documents for a query. "
-            "Returns dict {'context': str, 'sources': List[dict], 'docs': List[{page_content, metadata}]}"
+            "Returns dict {'context': str, 'sources': List[dict]}"
         ),
         func=rag_with_sources_func,
         args_schema=RetrieveInput,

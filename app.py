@@ -47,7 +47,7 @@ async def on_message(message: cl.Message):
     
     langchain_cb = cl.LangchainCallbackHandler(
         stream_final_answer=True,
-        answer_prefix_tokens=["**Answer:**\n\n"],
+        answer_prefix_tokens=["Background:\n"],
     )
 
     catcher = SourceCatcher()

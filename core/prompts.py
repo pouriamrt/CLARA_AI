@@ -75,7 +75,7 @@ def build_agent_prompt(tool_names: str, retriever_name: str) -> str:
     - No “Source(s)” preface. 
     - Citations inline only.
     - End result must be structured, categorized, reasoned, and complete.
-    - Use headings to structure the answer and bold the important parts.
+    - Use headings to structure the answer and bold the headings and important parts.
     """
     return agent_prompt
 
