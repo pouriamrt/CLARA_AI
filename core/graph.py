@@ -125,7 +125,7 @@ def build_app(cfg: AppConfig):
         - Then **Findings**: bullet list of results/metrics/claims. Attach [CIT:<id>:<page>] to any fact from RAG.
         - If SQL-only, present rows/aggregates succinctly under Findings (no SOURCES_JSON).
         - If RAG was used, include SOURCES_JSON=[{{...}}] as the LAST line, verbatim from the tool output.
-        - Use headings to structure the answer and bold the important parts.
+        - Use headings to structure the answer and bold the headings and important parts.
         """
 
         agent_response = await agent_executor.ainvoke({"messages": history + [("user", task_formatted)]}, config=config)
