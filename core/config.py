@@ -18,7 +18,8 @@ class AppConfig:
     openai_chat_model: str = "gpt-4.1-mini"
     openai_embed_model: str = "text-embedding-3-large"
     top_k: int = 10
-
+    sim_threshold: float = 0.25,
+    
     @staticmethod
     def from_env() -> "AppConfig":
         return AppConfig(
@@ -29,5 +30,6 @@ class AppConfig:
             openai_chat_model=_get("OPENAI_CHAT_MODEL", "gpt-4.1-mini"),
             openai_embed_model=_get("OPENAI_EMBED_MODEL", "text-embedding-3-large"),
             top_k=_get("TOP_K", 10),
+            sim_threshold=_get("SIM_THRESHOLD", 0.25),
         )
 
