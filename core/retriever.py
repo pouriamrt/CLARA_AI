@@ -88,6 +88,7 @@ def build_retriever_tool(
     openai_chat_model: str,
     openai_embed_model: str,
     top_k: int = 10,
+    sim_threshold: float = 0.25,
 ) -> StructuredTool:
     # Vector store
     embeddings = OpenAIEmbeddings(api_key=openai_api_key, model=openai_embed_model)
@@ -106,14 +107,14 @@ def build_retriever_tool(
         vectorstore=vectorstore,
         document_contents="medical research papers about exercise and dementia",
         metadata_field_info=build_metadata_info(),
-        search_kwargs={"k": top_k, "fetch_k": max(int(top_k)*2, 12), "mmr": True, "lambda_mult": 0.5},
+        search_kwargs={"k": top_k, "fetch_k": max(int(top_k)*2, 12), "mmr": True, "lambda_mult": 0.6},
     )
-    # base_retriever = vectorstore.as_retriever(search_kwargs={"k": top_k, "fetch_k": max(int(top_k)*2, 12), "mmr": True, "lambda_mult": 0.5})
+    # base_retriever = vectorstore.as_retriever(search_kwargs={"k": top_k, "fetch_k": max(int(top_k)*2, 12), "mmr": True, "lambda_mult": 0.6})
 
     extractor = LLMChainExtractor.from_llm(llm)
     emb_filter = EmbeddingsFilter(
         embeddings=embeddings,
-        similarity_threshold=0.25,
+        similarity_threshold=sim_threshold,
     )
     compressor = DocumentCompressorPipeline(
         transformers=[extractor, emb_filter]

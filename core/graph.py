@@ -51,6 +51,7 @@ def build_tools(cfg: AppConfig):
         openai_chat_model=cfg.openai_chat_model,
         openai_embed_model=cfg.openai_embed_model,
         top_k=cfg.top_k,
+        sim_threshold=cfg.sim_threshold,
     )
     
     tools.append(retr_tool)
